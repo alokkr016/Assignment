@@ -1,24 +1,31 @@
 package tech.alokkr.assignment.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+import tech.alokkr.assignment.model.Assignment;
 import tech.alokkr.assignment.service.AdminService;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/admin")
-@RequiredArgsConstructor
 public class AdminController {
-
-    private final AdminService adminService;
+    @Autowired
+    private AdminService adminService;
 
     @GetMapping("/assignments")
-    public ResponseEntity<?> viewAssignments(@RequestParam String adminId) {
-        return adminService.viewAssignments(adminId);
+    public List<Assignment> getAssignments(@RequestHeader("Authorization") String token) {
+        String admin = token; // Simplified token-based role
+        return adminService.getAssignmentsByAdmin(admin);
     }
 
-    @PostMapping("/assignments/{id}")
-    public ResponseEntity<?> updateAssignmentStatus(@PathVariable String id, @RequestParam String status) {
-        return adminService.updateAssignmentStatus(id, status);
+    @PostMapping("/assignments/{id}/accept")
+    public void acceptAssignment(@PathVariable String id) {
+        adminService.acceptAssignment(id);
+    }
+
+    @PostMapping("/assignments/{id}/reject")
+    public void rejectAssignment(@PathVariable String id) {
+        adminService.rejectAssignment(id);
     }
 }

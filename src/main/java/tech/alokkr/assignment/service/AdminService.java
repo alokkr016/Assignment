@@ -1,7 +1,6 @@
 package tech.alokkr.assignment.service;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import tech.alokkr.assignment.model.Assignment;
 import tech.alokkr.assignment.repository.AssignmentRepository;
@@ -9,23 +8,23 @@ import tech.alokkr.assignment.repository.AssignmentRepository;
 import java.util.List;
 
 @Service
-@RequiredArgsConstructor
 public class AdminService {
+    @Autowired
+    private AssignmentRepository assignmentRepository;
 
-    private final AssignmentRepository assignmentRepository;
-
-    public ResponseEntity<?> viewAssignments(String adminId) {
-        List<Assignment> assignments = assignmentRepository.findByAdminId(adminId);
-        return ResponseEntity.ok(assignments);
+    public List<Assignment> getAssignmentsByAdmin(String admin) {
+        return assignmentRepository.findByAdmin(admin);
     }
 
-    public ResponseEntity<?> updateAssignmentStatus(String id, String status) {
-        Assignment assignment = assignmentRepository.findById(id).orElse(null);
-        if (assignment != null) {
-            assignment.setStatus(status);
-            assignmentRepository.save(assignment);
-            return ResponseEntity.ok("Assignment status updated successfully");
-        }
-        return ResponseEntity.status(404).body("Assignment not found");
+    public void acceptAssignment(String assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow();
+        assignment.setStatus("ACCEPTED");
+        assignmentRepository.save(assignment);
+    }
+
+    public void rejectAssignment(String assignmentId) {
+        Assignment assignment = assignmentRepository.findById(assignmentId).orElseThrow();
+        assignment.setStatus("REJECTED");
+        assignmentRepository.save(assignment);
     }
 }

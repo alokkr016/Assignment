@@ -1,36 +1,42 @@
 package tech.alokkr.assignment.controller;
 
-import lombok.RequiredArgsConstructor;
-import org.springframework.http.ResponseEntity;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import tech.alokkr.assignment.model.Assignment;
 import tech.alokkr.assignment.model.User;
+import tech.alokkr.assignment.repository.AssignmentRepository;
+import tech.alokkr.assignment.service.JWTService;
 import tech.alokkr.assignment.service.UserService;
 
 @RestController
 @RequestMapping("/user")
-@RequiredArgsConstructor
 public class UserController {
-
-    private final UserService userService;
+    @Autowired
+    private UserService userService;
+    @Autowired
+    private JWTService jwtService;
+    @Autowired
+    private AssignmentRepository assignmentRepository;
 
     @PostMapping("/register")
-    public ResponseEntity<?> registerUser(@RequestBody User user) {
-        return userService.registerUser(user);
+    public User register(@RequestBody User user) {
+        return userService.register(user);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> loginUser(@RequestBody User user) {
-        return userService.loginUser(user);
+    public String login(@RequestBody User user) {
+        User authenticatedUser = userService.login(user.getUsername(), user.getPassword());
+        if (authenticatedUser != null) {
+            return jwtService.generateToken(authenticatedUser.getUsername());
+        }
+        return "Invalid credentials";
     }
 
     @PostMapping("/upload")
-    public ResponseEntity<?> uploadAssignment(@RequestBody Assignment assignment) {
-        return userService.uploadAssignment(assignment);
-    }
-
-    @GetMapping("/admins")
-    public ResponseEntity<?> getAllAdmins() {
-        return userService.getAllAdmins();
+    public Assignment uploadAssignment(@RequestBody Assignment assignment, @RequestHeader("Authorization") String token) {
+        // Extract username from the token
+        String userId = token;
+        assignment.setUserId(userId);
+        return assignmentRepository.save(assignment);
     }
 }
