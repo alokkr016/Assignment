@@ -1,18 +1,22 @@
 package tech.alokkr.assignment.security;
 
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.filter.OncePerRequestFilter;
+import tech.alokkr.assignment.service.JWTService;
 
-import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import tech.alokkr.assignment.service.JWTService;
-
 import java.io.IOException;
+import java.util.List;
 
 public class JWTAuthenticationFilter extends OncePerRequestFilter {
-    private JWTService jwtService;
+
+    private final JWTService jwtService;
 
     public JWTAuthenticationFilter(JWTService jwtService) {
         this.jwtService = jwtService;
@@ -22,10 +26,19 @@ public class JWTAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
         String token = request.getHeader("Authorization");
-        if (token != null) {
-            String username = jwtService.extractUsername(token);
-            // Store username in security context here (omitted for brevity)
+
+        if (token != null && token.startsWith("Bearer ")) {
+            token = token.substring(7); // Remove "Bearer " prefix
+
+            if (jwtService.validateToken(token)) {
+                String username = jwtService.extractUsername(token);
+                List<GrantedAuthority> authorities = jwtService.extractAuthorities(token);
+
+                Authentication auth = new UsernamePasswordAuthenticationToken(username, null, authorities);
+                SecurityContextHolder.getContext().setAuthentication(auth);
+            }
         }
+
         filterChain.doFilter(request, response);
     }
 }

@@ -1,12 +1,14 @@
 package tech.alokkr.assignment.service;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Bean;
-import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.bcrypt.BCrypt;
 import org.springframework.stereotype.Service;
+import tech.alokkr.assignment.model.Role;
 import tech.alokkr.assignment.model.User;
 import tech.alokkr.assignment.repository.UserRepository;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService {
@@ -14,22 +16,28 @@ public class UserService {
     @Autowired
     private UserRepository userRepository;
 
-    public UserService(){
-        bCryptPasswordEncoder = new BCryptPasswordEncoder();
-    }
-
-    private BCryptPasswordEncoder bCryptPasswordEncoder;
-
     public User register(User user) {
-        user.setPassword(bCryptPasswordEncoder.encode(user.getPassword()));
+        if (userRepository.existsByEmail(user.getEmail())) {
+            throw new IllegalArgumentException("Email is already in use.");
+        }
+        user.setPassword(BCrypt.hashpw(user.getPassword(), BCrypt.gensalt())); // Encrypt the password
         return userRepository.save(user);
     }
 
     public User login(String username, String password) {
-        User user = userRepository.findByUsername(username);
-        if (user != null && bCryptPasswordEncoder.matches(password, user.getPassword())) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+        if (BCrypt.checkpw(password, user.getPassword())) {
             return user;
+        } else {
+            throw new IllegalArgumentException("Invalid credentials");
         }
-        return null;
+    }
+
+
+    public List<User> getAllAdmins() {
+        return userRepository.findAll().stream()
+                .filter(user -> user.getRole() == Role.ROLE_ADMIN)
+                .collect(Collectors.toList());
     }
 }

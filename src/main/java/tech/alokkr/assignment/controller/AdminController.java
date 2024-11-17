@@ -10,13 +10,13 @@ import java.util.List;
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
+
     @Autowired
     private AdminService adminService;
 
     @GetMapping("/assignments")
-    public List<Assignment> getAssignments(@RequestHeader("Authorization") String token) {
-        String admin = token; // Simplified token-based role
-        return adminService.getAssignmentsByAdmin(admin);
+    public List<Assignment> getAssignments() {
+        return adminService.getAssignments();
     }
 
     @PostMapping("/assignments/{id}/accept")

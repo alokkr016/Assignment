@@ -9,11 +9,12 @@ import java.util.List;
 
 @Service
 public class AdminService {
+
     @Autowired
     private AssignmentRepository assignmentRepository;
 
-    public List<Assignment> getAssignmentsByAdmin(String admin) {
-        return assignmentRepository.findByAdmin(admin);
+    public List<Assignment> getAssignments() {
+        return assignmentRepository.findAll();
     }
 
     public void acceptAssignment(String assignmentId) {
